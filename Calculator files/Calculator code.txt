@@ -1,0 +1,154 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class Calculator {
+
+    private JFrame frame;
+    private JTextField display;
+
+    private String currentInput = "";
+    private double result = 0;
+    private char operator = ' ';
+    private boolean isOperatorClicked = false;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            new Calculator().initialize();
+        });
+    }
+
+    private void initialize() {
+        frame = new JFrame("Complex Calculator");
+        frame.setSize(400, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        display = new JTextField();
+        display.setEditable(false);
+        display.setHorizontalAlignment(JTextField.RIGHT);
+        panel.add(display, BorderLayout.NORTH);
+        panel.add(createButtonsPanel(), BorderLayout.CENTER);
+
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+
+    private JPanel createButtonsPanel() {
+        JPanel buttonsPanel = new JPanel(new GridLayout(5, 4, 5, 5));
+
+        String[] buttonLabels = {
+                "7", "8", "9", "/",
+                "4", "5", "6", "*",
+                "1", "2", "3", "-",
+                "0", ".", "=", "+", "C"  // Added the "C" button for clear
+        };
+
+        for (String label : buttonLabels) {
+            JButton button = new JButton(label);
+            button.addActionListener(new ButtonClickListener());
+            buttonsPanel.add(button);
+        }
+
+        return buttonsPanel;
+    }
+
+    private class ButtonClickListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            JButton source = (JButton) e.getSource();
+            String buttonText = source.getText();
+
+            if (Character.isDigit(buttonText.charAt(0)) || buttonText.equals(".")) {
+                handleDigitAndDotInput(buttonText);
+            } else if (buttonText.equals("=")) {
+                calculateResult();
+            } else if (buttonText.equals("C")) {
+                resetCalculator();  // Added handling for the "C" button
+            } else {
+                handleOperatorInput(buttonText.charAt(0));
+            }
+
+            updateDisplay();
+        }
+    }
+
+    private void handleDigitAndDotInput(String input) {
+        if (isOperatorClicked) {
+            currentInput = "";
+            isOperatorClicked = false;
+        }
+        currentInput += input;
+    }
+
+    private void handleOperatorInput(char newOperator) {
+        if (!currentInput.isEmpty()) {
+            calculateResult();
+            operator = newOperator;
+            isOperatorClicked = true;
+        } else {
+            operator = newOperator;
+        }
+    }
+
+    private void calculateResult() {
+        if (!currentInput.isEmpty()) {
+            double currentNumber = Double.parseDouble(currentInput);
+            switch (operator) {
+                case '+':
+                    result += currentNumber;
+                    break;
+                case '-':
+                    result -= currentNumber;
+                    break;
+                case '*':
+                    result *= currentNumber;
+                    break;
+                case '/':
+                    if (currentNumber != 0) {
+                        result /= currentNumber;
+                    } else {
+                        display.setText("Error: Division by zero");
+                        resetCalculator();
+                        return;
+                    }
+                    break;
+                default:
+                    result = currentNumber;
+                    break;
+            }
+        }
+        resetInput();
+    }
+
+    private void resetInput() {
+        currentInput = "";
+        isOperatorClicked = false;
+    }
+
+    private void updateDisplay() {
+        display.setText(currentInput.isEmpty() ? formatResult(result) : currentInput);
+    }
+
+    private String formatResult(double value) {
+        if (value == (long) value) {
+            return String.format("%d", (long) value);
+        } else {
+            return String.format("%s", value);
+        }
+    }
+
+    private void resetCalculator() {
+        currentInput = "";
+        result = 0;
+        operator = ' ';
+        isOperatorClicked = false;
+        updateDisplay();
+    }
+}
